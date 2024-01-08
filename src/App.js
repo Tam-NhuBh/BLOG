@@ -1,24 +1,48 @@
-import logo from './logo.svg';
-import './App.css';
+import { Route, Routes } from "react-router-dom";
+import "./App.css";
+import { jwtDecode } from 'jwt-decode';
+import Cookies from 'js-cookie';
+import { listRouter } from "./constants";
+import { useEffect, useState } from "react";
 
 function App() {
+  const [routers, setRouters] = useState([]);
+  useEffect(() => {
+    const getRouter = () => {
+      const authToken = Cookies.get('authToken');  
+      console.log("authToken",authToken);
+      if (authToken) {
+        // Decode the JWT token to get user information
+        const decodedToken = jwtDecode(authToken);
+        const userToken = decodedToken.user;
+        Cookies.remove('authToken');
+        console.log("userToken",userToken);
+        localStorage.setItem('user', JSON.stringify(userToken));
+      }
+      const obj = localStorage.getItem("user");
+
+      console.log("Tai khoan:",obj)
+      const type = JSON?.parse(obj)?.role;
+      switch (type) {
+        case 1:
+          setRouters(listRouter.admin);
+          break;
+        case 0:
+          setRouters(listRouter.user);
+          break;
+        default:
+          setRouters(listRouter.guest);
+          break;
+      }
+    };
+    getRouter();
+  }, []);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Routes>
+      {routers?.map((router, index) => (
+        <Route path={router.path} element={router?.element} key={index} />
+      ))}
+    </Routes>
   );
 }
 
